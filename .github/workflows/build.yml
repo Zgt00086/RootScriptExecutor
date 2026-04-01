@@ -10,6 +10,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
       - name: Build APK
         run: gradle assembleDebug
       - name: Upload APK
@@ -17,3 +21,4 @@ jobs:
         with:
           name: Root-Executor-APK
           path: app/build/outputs/apk/debug/*.apk
+
