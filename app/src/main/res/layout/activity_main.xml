@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:background="#1A1A1B"
         android:padding="8dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -19,8 +20,19 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:textStyle="bold" />
-        <Button id="@+id/btn_sort" android:layout_width="wrap_content" android:layout_height="35dp" android:text="排序" android:textSize="10sp" android:layout_marginEnd="4dp"/>
-        <Button id="@+id/btn_refresh" android:layout_width="wrap_content" android:layout_height="35dp" android:text="刷新" android:textSize="10sp" />
+        <Button 
+            android:id="@+id/btn_sort" 
+            android:layout_width="wrap_content" 
+            android:layout_height="35dp" 
+            android:text="排序" 
+            android:textSize="10sp" 
+            android:layout_marginEnd="4dp"/>
+        <Button 
+            android:id="@+id/btn_refresh" 
+            android:layout_width="wrap_content" 
+            android:layout_height="35dp" 
+            android:text="刷新" 
+            android:textSize="10sp" />
     </LinearLayout>
 
     <ListView
@@ -43,7 +55,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:text="Terminal Initialized...\n"
+            android:text="Terminal Ready...\n"
             android:textColor="#00FF00" 
             android:textSize="10sp" />
     </ScrollView>
@@ -52,7 +64,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#121212"
-        android:padding="4dp">
+        android:padding="4dp"
+        android:orientation="horizontal">
         <EditText
             android:id="@+id/et_input"
             android:layout_width="0dp"

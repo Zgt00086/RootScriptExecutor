@@ -1,6 +1,7 @@
 package com.example.rootscriptexecutor
 
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -16,21 +17,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var consoleOutput: TextView
     private lateinit var consoleScroll: ScrollView
     private lateinit var etInput: EditText
+    private lateinit var listView: ListView
     private var scriptWriter: BufferedWriter? = null
-    private var currentSort = 2 // 默认按日期排序
+    private var currentSort = 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // 初始化所有组件
         consoleOutput = findViewById(R.id.console_output)
         consoleScroll = findViewById(R.id.console_scroll)
         etInput = findViewById(R.id.et_input)
-        val listView = findViewById<ListView>(R.id.script_list)
+        listView = findViewById(R.id.script_list)
 
-        findViewById<Button>(R.id.btn_refresh).setOnClickListener { refresh() }
-        findViewById<Button>(R.id.btn_sort).setOnClickListener { showSort() }
-        findViewById<Button>(R.id.btn_send).setOnClickListener { send() }
+        findViewById<Button>(R.id.btn_refresh)?.setOnClickListener { refresh() }
+        findViewById<Button>(R.id.btn_sort)?.setOnClickListener { showSort() }
+        findViewById<Button>(R.id.btn_send)?.setOnClickListener { send() }
 
         listView.setOnItemClickListener { _, _, i, _ -> runScript(scripts[i].name) }
 
@@ -49,7 +52,6 @@ class MainActivity : AppCompatActivity() {
     private fun refresh() {
         Thread {
             try {
-                // 使用 ls -al 获取详细信息用于排序
                 val p = Runtime.getRuntime().exec(arrayOf("su", "-c", "ls -al /data/adb/5/"))
                 val lines = p.inputStream.bufferedReader().readLines()
                 val newList = mutableListOf<ScriptFile>()
@@ -68,7 +70,9 @@ class MainActivity : AppCompatActivity() {
                     scripts.addAll(newList)
                     applySort()
                 }
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                runOnUiThread { consoleOutput.append("刷新异常: ${e.message}\n") }
+            }
         }.start()
     }
 
@@ -80,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         }
         displayNames.clear()
         scripts.forEach { displayNames.add(it.name) }
-        findViewById<ListView>(R.id.script_list).adapter = ArrayAdapter(this, R.layout.my_list_item, displayNames)
+        listView.adapter = ArrayAdapter(this, R.layout.my_list_item, displayNames)
     }
 
     private fun send() {
@@ -117,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                     val l = line
                     runOnUiThread {
                         consoleOutput.append(l + "\n")
-                        consoleScroll.post { consoleScroll.fullScroll(android.view.View.FOCUS_DOWN) }
+                        consoleScroll.post { consoleScroll.fullScroll(View.FOCUS_DOWN) }
                     }
                 }
             } catch (e: Exception) {
