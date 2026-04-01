@@ -3,79 +3,75 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000">
+    android:background="?android:attr/windowBackground">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tv_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#212121"
+        android:background="#1A1A1B"
         android:padding="10dp"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="等待选择脚本..."
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
-        <Button
-            android:id="@+id/btn_refresh"
-            android:layout_width="wrap_content"
-            android:layout_height="35dp"
-            android:background="#3D5AFE"
-            android:text="刷新"
-            android:textSize="10sp"
-            android:textColor="#FFFFFF" />
-    </LinearLayout>
+        android:text="脚本管理器 (专业版)"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btn_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_margin="4dp"
+        android:text="刷新列表"
+        android:textSize="12sp" />
 
     <ListView
         android:id="@+id/script_list"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:background="#121212"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:divider="#333333"
-        android:dividerHeight="1dp" />
+        android:dividerHeight="0.5dp"
+        android:background="?android:attr/colorBackground" />
 
     <ScrollView
         android:id="@+id/console_scroll"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="280dp"
         android:background="#000000"
-        android:padding="8dp">
+        android:padding="6dp">
         <TextView
             android:id="@+id/console_output"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:text="MT-Style Console v1.0\n--------------------\n"
+            android:text="Console Ready...\n"
             android:textColor="#00FF00" 
-            android:textSize="13sp" />
+            android:textSize="10sp" 
+            android:lineSpacingExtra="2dp" />
     </ScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#1A1A1A"
-        android:padding="5dp"
+        android:background="#121212"
+        android:padding="2dp"
         android:orientation="horizontal">
         <EditText
             android:id="@+id/et_input"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="45dp"
             android:layout_weight="1"
-            android:hint="在此输入选项..."
+            android:hint="输入指令..."
             android:textColor="#FFFFFF"
-            android:textColorHint="#666666"
+            android:textSize="13sp"
             android:background="@null"
-            android:padding="10dp" />
+            android:paddingStart="12dp" />
         <Button
             android:id="@+id/btn_send"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
             android:text="发送"
-            android:backgroundTint="#3D5AFE" />
+            android:textSize="12sp" />
     </LinearLayout>
 </LinearLayout>
 
