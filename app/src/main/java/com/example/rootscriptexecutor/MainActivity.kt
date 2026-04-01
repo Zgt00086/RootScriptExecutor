@@ -4,55 +4,68 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.topjohnwu.superuser.Shell
+import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: ArrayAdapter<String>
     private val scriptList = mutableListOf<String>()
+    private lateinit var consoleOutput: TextView
+    private lateinit var consoleScroll: ScrollView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        consoleOutput = findViewById(R.id.console_output)
+        consoleScroll = findViewById(R.id.console_scroll)
         val listView = findViewById<ListView>(R.id.script_list)
         val btnRefresh = findViewById<Button>(R.id.btn_refresh)
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scriptList)
         listView.adapter = adapter
 
-        // 刷新列表
         btnRefresh.setOnClickListener { refreshScripts() }
 
-        // 点击执行脚本
         listView.setOnItemClickListener { _, _, position, _ ->
             val scriptName = scriptList[position]
-            executeScript(scriptName)
+            executeWithTerminal(scriptName)
         }
 
-        refreshScripts() // 启动时自动刷新一次
+        refreshScripts()
     }
 
     private fun refreshScripts() {
         scriptList.clear()
-        // 修正点：使用 exec().out 来获取命令输出的行列表
         val result = Shell.cmd("ls /data/adb/5/ | grep .sh").exec()
         scriptList.addAll(result.out)
-        
-        if (scriptList.isEmpty()) {
-            Toast.makeText(this, "目录下未找到脚本文件", Toast.LENGTH_SHORT).show()
-        }
         adapter.notifyDataSetChanged()
     }
 
-    private fun executeScript(name: String) {
+    private fun executeWithTerminal(name: String) {
         val fullPath = "/data/adb/5/$name"
-        Toast.makeText(this, "正在执行: $name", Toast.LENGTH_SHORT).show()
-        
+        consoleOutput.text = ">>> 正在启动: $name\n"
+
         Thread {
-            // 执行脚本，并在主线程弹出提示
-            Shell.cmd("sh $fullPath").exec()
+            // 这里是关键：实时捕获脚本输出
+            val outputLines = Collections.synchronizedList(mutableListOf<String>())
+            val result = Shell.cmd("sh $fullPath").to(outputLines, outputLines).exec()
+
             runOnUiThread {
-                Toast.makeText(this, "$name 指令已发送", Toast.LENGTH_SHORT).show()
+                val finalContent = StringBuilder()
+                outputLines.forEach { line ->
+                    finalContent.append(line).append("\n")
+                }
+                
+                if (result.isSuccess) {
+                    finalContent.append("\n[OK] 脚本执行完毕")
+                } else {
+                    finalContent.append("\n[ERROR] 脚本异常退出，错误码: ${result.code}")
+                }
+                
+                consoleOutput.text = finalContent.toString()
+                // 自动滚动到黑屏最下方
+                consoleScroll.post { consoleScroll.fullScroll(ScrollView.FOCUS_DOWN) }
             }
         }.start()
     }
