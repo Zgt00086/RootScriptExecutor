@@ -17,7 +17,6 @@
         android:id="@+id/btn_refresh"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:text="刷新脚本列表" />
 
     <ListView
@@ -26,22 +25,19 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginTop="8dp"
-        android:background="?android:attr/colorBackground"
-        android:divider="?android:attr/listDivider"
-        android:dividerHeight="1dp" />
+        android:background="?android:attr/colorBackground" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="执行日志 (黑客模式):"
+        android:text="交互终端 (支持 Stdin 输入):"
         android:textColor="?android:attr/textColorSecondary" />
 
     <ScrollView
         android:id="@+id/console_scroll"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="200dp"
         android:background="#121212"
         android:padding="8dp">
         <TextView
@@ -49,9 +45,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:text="等待指令...\n"
+            android:text="等待脚本运行...\n"
             android:textColor="#00FF00" 
             android:textSize="12sp" />
     </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp">
+        <EditText
+            android:id="@+id/et_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="输入选项 (如 1, 2, 100)"
+            android:inputType="text"
+            android:textColor="?android:attr/textColorPrimary" />
+        <Button
+            android:id="@+id/btn_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="发送" />
+    </LinearLayout>
 </LinearLayout>
 
