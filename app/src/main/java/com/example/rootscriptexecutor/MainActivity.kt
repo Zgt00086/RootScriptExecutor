@@ -19,71 +19,64 @@ class MainActivity : AppCompatActivity() {
 
         consoleOutput = findViewById(R.id.console_output)
         consoleScroll = findViewById(R.id.console_scroll)
-        val listView = findViewById<ListView>(R.id.script_list)
+        val listView = findViewById(R.id.script_list)
         val btnRefresh = findViewById<Button>(R.id.btn_refresh)
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scriptList)
         listView.adapter = adapter
 
-        // 点击刷新
-        btnRefresh.setOnClickListener { 
-            Toast.makeText(this, "正在请求 Root 权限并读取目录...", Toast.LENGTH_SHORT).show()
-            refreshScripts() 
-        }
-
-        // 点击执行
+        btnRefresh.setOnClickListener { refreshScripts() }
         listView.setOnItemClickListener { _, _, position, _ ->
-            val scriptName = scriptList[position]
-            executeWithTerminal(scriptName)
+            executeWithTerminal(scriptList[position])
         }
 
-        // 启动时自动刷新
+        // 启动时直接刷，不等了
         refreshScripts()
     }
 
     private fun refreshScripts() {
-        // 关键修复：把读取文件的操作放到后台线程，防止主线程卡死或权限申请失败
         Thread {
-            scriptList.clear()
-            // 确保以 Root 身份执行 ls
-            val result = Shell.cmd("ls /data/adb/5/ | grep .sh").exec()
-            
-            runOnUiThread {
-                if (result.isSuccess) {
-                    scriptList.addAll(result.out)
-                    if (scriptList.isEmpty()) {
-                        consoleOutput.text = ">>> 提示: /data/adb/5/ 目录下没有 .sh 文件\n"
+            try {
+                // 强制唤醒全局 Root Shell
+                val isRoot = Shell.getShell().isRoot
+                
+                // 直接跑 ls，不做任何过滤逻辑
+                val output = Shell.cmd("ls /data/adb/5/").exec().out
+                
+                // 拿到结果后再在 UI 上过滤 .sh
+                val filtered = output.filter { it.endsWith(".sh") }
+
+                runOnUiThread {
+                    scriptList.clear()
+                    scriptList.addAll(filtered)
+                    adapter.notifyDataSetChanged()
+                    
+                    if (!isRoot) {
+                        consoleOutput.append(">>> [警告] 未检测到 Root 权限！\n")
+                    } else if (filtered.isEmpty()) {
+                        consoleOutput.append(">>> [提示] 目录读取成功，但没找到 .sh 文件\n")
+                    } else {
+                        consoleOutput.append(">>> 已刷新，找到 ${filtered.size} 个脚本\n")
                     }
-                } else {
-                    consoleOutput.text = ">>> 错误: 无法读取目录，请确认已授予 Root 权限！\n"
                 }
-                adapter.notifyDataSetChanged()
+            } catch (e: Exception) {
+                runOnUiThread { consoleOutput.append(">>> 发生错误: ${e.message}\n") }
             }
         }.start()
     }
 
     private fun executeWithTerminal(name: String) {
         val fullPath = "/data/adb/5/$name"
-        consoleOutput.text = ">>> 正在启动脚本: $name\n--------------------\n"
+        consoleOutput.text = ">>> 启动: $name\n--------------------\n"
 
         Thread {
             val outputLines = Collections.synchronizedList(mutableListOf<String>())
-            // 同时捕获标准输出和错误输出
+            // 沿用最稳的执行逻辑
             val result = Shell.cmd("sh $fullPath").to(outputLines, outputLines).exec()
 
             runOnUiThread {
-                val finalContent = StringBuilder()
-                outputLines.forEach { line ->
-                    finalContent.append(line).append("\n")
-                }
-                
-                if (result.isSuccess) {
-                    finalContent.append("\n[√] 脚本执行成功")
-                } else {
-                    finalContent.append("\n[×] 脚本执行失败，返回码: ${result.code}")
-                }
-                
-                consoleOutput.text = finalContent.toString()
+                outputLines.forEach { consoleOutput.append("$it\n") }
+                consoleOutput.append(if (result.isSuccess) "\n[OK]" else "\n[FAILED: ${result.code}]")
                 consoleScroll.post { consoleScroll.fullScroll(ScrollView.FOCUS_DOWN) }
             }
         }.start()
