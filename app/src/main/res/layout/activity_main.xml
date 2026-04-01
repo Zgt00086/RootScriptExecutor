@@ -1,103 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    tools:context=".MainActivity">
+    android:padding="16dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Root Script Executor"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Script Name:"
-        android:layout_marginBottom="4dp" />
-
-    <EditText
-        android:id="@+id/scriptNameEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="e.g., test.sh"
-        android:inputType="text"
-        android:layout_marginBottom="12dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Script Content:"
-        android:layout_marginBottom="4dp" />
-
-    <EditText
-        android:id="@+id/scriptContentEditText"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:hint="Enter script content here..."
-        android:inputType="textMultiLine"
-        android:gravity="top"
-        android:layout_marginBottom="12dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="12dp">
-
-        <Button
-            android:id="@+id/uploadButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Upload"
-            android:layout_marginEnd="8dp" />
-
-        <Button
-            android:id="@+id/executeButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Execute"
-            android:layout_marginStart="8dp" />
-
-    </LinearLayout>
+        android:text="脚本库: /data/adb/5/"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <Button
-        android:id="@+id/listButton"
+        android:id="@+id/btn_refresh"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="List Scripts"
-        android:layout_marginBottom="16dp" />
+        android:text="刷新文件列表" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Output:"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp" />
-
-    <ScrollView
+    <ListView
+        android:id="@+id/script_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <TextView
-            android:id="@+id/outputTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:padding="8dp"
-            android:text="Output will appear here..."
-            android:textColor="@android:color/black"
-            android:textSize="14sp" />
-
-    </ScrollView>
-
+        android:layout_weight="1" />
 </LinearLayout>
+
