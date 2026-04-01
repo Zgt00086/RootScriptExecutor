@@ -34,9 +34,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshScripts() {
         scriptList.clear()
-        // 使用 Root 权限列出目录下所有的 .sh 文件
-        val output = Shell.cmd("ls /data/adb/5/ | grep .sh").getOutput()
-        scriptList.addAll(output)
+        // 修正点：使用 exec().out 来获取命令输出的行列表
+        val result = Shell.cmd("ls /data/adb/5/ | grep .sh").exec()
+        scriptList.addAll(result.out)
         
         if (scriptList.isEmpty()) {
             Toast.makeText(this, "目录下未找到脚本文件", Toast.LENGTH_SHORT).show()
@@ -49,10 +49,10 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "正在执行: $name", Toast.LENGTH_SHORT).show()
         
         Thread {
-            // 执行脚本，不再自动停止服务或关闭界面
+            // 执行脚本，并在主线程弹出提示
             Shell.cmd("sh $fullPath").exec()
             runOnUiThread {
-                Toast.makeText(this, "$name 执行指令已发送", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "$name 指令已发送", Toast.LENGTH_SHORT).show()
             }
         }.start()
     }
