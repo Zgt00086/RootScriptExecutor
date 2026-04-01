@@ -5,33 +5,32 @@
     android:orientation="vertical"
     android:background="?android:attr/windowBackground">
 
-    <TextView
-        android:id="@+id/tv_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#1A1A1B"
-        android:padding="10dp"
-        android:text="脚本管理器 (专业版)"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/btn_refresh"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_margin="4dp"
-        android:text="刷新列表"
-        android:textSize="12sp" />
+        android:padding="8dp"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ROOT EXECUTOR PRO"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+        <Button id="@+id/btn_sort" android:layout_width="wrap_content" android:layout_height="35dp" android:text="排序" android:textSize="10sp" android:layout_marginEnd="4dp"/>
+        <Button id="@+id/btn_refresh" android:layout_width="wrap_content" android:layout_height="35dp" android:text="刷新" android:textSize="10sp" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/script_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="#333333"
-        android:dividerHeight="0.5dp"
-        android:background="?android:attr/colorBackground" />
+        android:background="?android:attr/colorBackground"
+        android:divider="#444444"
+        android:dividerHeight="0.5dp" />
 
     <ScrollView
         android:id="@+id/console_scroll"
@@ -44,34 +43,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:text="Console Ready...\n"
+            android:text="Terminal Initialized...\n"
             android:textColor="#00FF00" 
-            android:textSize="10sp" 
-            android:lineSpacingExtra="2dp" />
+            android:textSize="10sp" />
     </ScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#121212"
-        android:padding="2dp"
-        android:orientation="horizontal">
+        android:padding="4dp">
         <EditText
             android:id="@+id/et_input"
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_weight="1"
-            android:hint="输入指令..."
+            android:hint="输入指令/选项"
             android:textColor="#FFFFFF"
             android:textSize="13sp"
             android:background="@null"
-            android:paddingStart="12dp" />
+            android:paddingStart="10dp" />
         <Button
             android:id="@+id/btn_send"
             android:layout_width="70dp"
             android:layout_height="40dp"
             android:text="发送"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
     </LinearLayout>
 </LinearLayout>
 
