@@ -25,30 +25,50 @@ class MainActivity : AppCompatActivity() {
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scriptList)
         listView.adapter = adapter
 
-        btnRefresh.setOnClickListener { refreshScripts() }
+        // 点击刷新
+        btnRefresh.setOnClickListener { 
+            Toast.makeText(this, "正在请求 Root 权限并读取目录...", Toast.LENGTH_SHORT).show()
+            refreshScripts() 
+        }
 
+        // 点击执行
         listView.setOnItemClickListener { _, _, position, _ ->
             val scriptName = scriptList[position]
             executeWithTerminal(scriptName)
         }
 
+        // 启动时自动刷新
         refreshScripts()
     }
 
     private fun refreshScripts() {
-        scriptList.clear()
-        val result = Shell.cmd("ls /data/adb/5/ | grep .sh").exec()
-        scriptList.addAll(result.out)
-        adapter.notifyDataSetChanged()
+        // 关键修复：把读取文件的操作放到后台线程，防止主线程卡死或权限申请失败
+        Thread {
+            scriptList.clear()
+            // 确保以 Root 身份执行 ls
+            val result = Shell.cmd("ls /data/adb/5/ | grep .sh").exec()
+            
+            runOnUiThread {
+                if (result.isSuccess) {
+                    scriptList.addAll(result.out)
+                    if (scriptList.isEmpty()) {
+                        consoleOutput.text = ">>> 提示: /data/adb/5/ 目录下没有 .sh 文件\n"
+                    }
+                } else {
+                    consoleOutput.text = ">>> 错误: 无法读取目录，请确认已授予 Root 权限！\n"
+                }
+                adapter.notifyDataSetChanged()
+            }
+        }.start()
     }
 
     private fun executeWithTerminal(name: String) {
         val fullPath = "/data/adb/5/$name"
-        consoleOutput.text = ">>> 正在启动: $name\n"
+        consoleOutput.text = ">>> 正在启动脚本: $name\n--------------------\n"
 
         Thread {
-            // 这里是关键：实时捕获脚本输出
             val outputLines = Collections.synchronizedList(mutableListOf<String>())
+            // 同时捕获标准输出和错误输出
             val result = Shell.cmd("sh $fullPath").to(outputLines, outputLines).exec()
 
             runOnUiThread {
@@ -58,13 +78,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 
                 if (result.isSuccess) {
-                    finalContent.append("\n[OK] 脚本执行完毕")
+                    finalContent.append("\n[√] 脚本执行成功")
                 } else {
-                    finalContent.append("\n[ERROR] 脚本异常退出，错误码: ${result.code}")
+                    finalContent.append("\n[×] 脚本执行失败，返回码: ${result.code}")
                 }
                 
                 consoleOutput.text = finalContent.toString()
-                // 自动滚动到黑屏最下方
                 consoleScroll.post { consoleScroll.fullScroll(ScrollView.FOCUS_DOWN) }
             }
         }.start()
