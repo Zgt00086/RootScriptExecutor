@@ -17,9 +17,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        consoleOutput = findViewById(R.id.console_output)
-        consoleScroll = findViewById(R.id.console_scroll)
-        val listView = findViewById(R.id.script_list)
+        // 显式指定泛型类型 <T>，解决编译器的推断报错
+        consoleOutput = findViewById<TextView>(R.id.console_output)
+        consoleScroll = findViewById<ScrollView>(R.id.console_scroll)
+        val listView = findViewById<ListView>(R.id.script_list)
         val btnRefresh = findViewById<Button>(R.id.btn_refresh)
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scriptList)
@@ -30,20 +31,15 @@ class MainActivity : AppCompatActivity() {
             executeWithTerminal(scriptList[position])
         }
 
-        // 启动时直接刷，不等了
         refreshScripts()
     }
 
     private fun refreshScripts() {
         Thread {
             try {
-                // 强制唤醒全局 Root Shell
-                val isRoot = Shell.getShell().isRoot
-                
-                // 直接跑 ls，不做任何过滤逻辑
+                // 确保 Root 环境激活
+                Shell.getShell().isRoot
                 val output = Shell.cmd("ls /data/adb/5/").exec().out
-                
-                // 拿到结果后再在 UI 上过滤 .sh
                 val filtered = output.filter { it.endsWith(".sh") }
 
                 runOnUiThread {
@@ -51,32 +47,29 @@ class MainActivity : AppCompatActivity() {
                     scriptList.addAll(filtered)
                     adapter.notifyDataSetChanged()
                     
-                    if (!isRoot) {
-                        consoleOutput.append(">>> [警告] 未检测到 Root 权限！\n")
-                    } else if (filtered.isEmpty()) {
-                        consoleOutput.append(">>> [提示] 目录读取成功，但没找到 .sh 文件\n")
+                    if (filtered.isEmpty()) {
+                        consoleOutput.append(">>> 提示: /data/adb/5/ 目录下无脚本或无权限读取\n")
                     } else {
-                        consoleOutput.append(">>> 已刷新，找到 ${filtered.size} 个脚本\n")
+                        consoleOutput.append(">>> 刷新成功，找到 ${filtered.size} 个脚本\n")
                     }
                 }
             } catch (e: Exception) {
-                runOnUiThread { consoleOutput.append(">>> 发生错误: ${e.message}\n") }
+                runOnUiThread { consoleOutput.append(">>> 刷新出错: ${e.message}\n") }
             }
         }.start()
     }
 
     private fun executeWithTerminal(name: String) {
         val fullPath = "/data/adb/5/$name"
-        consoleOutput.text = ">>> 启动: $name\n--------------------\n"
+        consoleOutput.text = ">>> 正在执行: $name\n--------------------\n"
 
         Thread {
             val outputLines = Collections.synchronizedList(mutableListOf<String>())
-            // 沿用最稳的执行逻辑
             val result = Shell.cmd("sh $fullPath").to(outputLines, outputLines).exec()
 
             runOnUiThread {
                 outputLines.forEach { consoleOutput.append("$it\n") }
-                consoleOutput.append(if (result.isSuccess) "\n[OK]" else "\n[FAILED: ${result.code}]")
+                consoleOutput.append(if (result.isSuccess) "\n[√] 任务完成" else "\n[×] 任务失败: ${result.code}")
                 consoleScroll.post { consoleScroll.fullScroll(ScrollView.FOCUS_DOWN) }
             }
         }.start()
