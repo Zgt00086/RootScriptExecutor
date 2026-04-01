@@ -8,8 +8,8 @@ import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var adapter: ArrayAdapter<String>
     private val scriptList = mutableListOf<String>()
+    private lateinit var listView: ListView
     private lateinit var consoleOutput: TextView
     private lateinit var consoleScroll: ScrollView
 
@@ -17,14 +17,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 显式指定泛型类型 <T>，解决编译器的推断报错
         consoleOutput = findViewById<TextView>(R.id.console_output)
         consoleScroll = findViewById<ScrollView>(R.id.console_scroll)
-        val listView = findViewById<ListView>(R.id.script_list)
+        listView = findViewById<ListView>(R.id.script_list)
         val btnRefresh = findViewById<Button>(R.id.btn_refresh)
-
-        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scriptList)
-        listView.adapter = adapter
 
         btnRefresh.setOnClickListener { refreshScripts() }
         listView.setOnItemClickListener { _, _, position, _ ->
@@ -37,7 +33,6 @@ class MainActivity : AppCompatActivity() {
     private fun refreshScripts() {
         Thread {
             try {
-                // 确保 Root 环境激活
                 Shell.getShell().isRoot
                 val output = Shell.cmd("ls /data/adb/5/").exec().out
                 val filtered = output.filter { it.endsWith(".sh") }
@@ -45,23 +40,26 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     scriptList.clear()
                     scriptList.addAll(filtered)
-                    adapter.notifyDataSetChanged()
+                    
+                    // 核心修复：重新创建适配器并绑定，解决 UI 假死不显示的问题
+                    val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scriptList)
+                    listView.adapter = adapter
                     
                     if (filtered.isEmpty()) {
-                        consoleOutput.append(">>> 提示: /data/adb/5/ 目录下无脚本或无权限读取\n")
+                        consoleOutput.append(">>> 目录读取为空，请检查权限和文件\n")
                     } else {
-                        consoleOutput.append(">>> 刷新成功，找到 ${filtered.size} 个脚本\n")
+                        consoleOutput.append(">>> 成功刷新: 已找到 ${filtered.size} 个脚本\n")
                     }
                 }
             } catch (e: Exception) {
-                runOnUiThread { consoleOutput.append(">>> 刷新出错: ${e.message}\n") }
+                runOnUiThread { consoleOutput.append(">>> 刷新错误: ${e.message}\n") }
             }
         }.start()
     }
 
     private fun executeWithTerminal(name: String) {
         val fullPath = "/data/adb/5/$name"
-        consoleOutput.text = ">>> 正在执行: $name\n--------------------\n"
+        consoleOutput.text = ">>> 正在运行: $name\n--------------------\n"
 
         Thread {
             val outputLines = Collections.synchronizedList(mutableListOf<String>())
@@ -69,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
             runOnUiThread {
                 outputLines.forEach { consoleOutput.append("$it\n") }
-                consoleOutput.append(if (result.isSuccess) "\n[√] 任务完成" else "\n[×] 任务失败: ${result.code}")
+                consoleOutput.append(if (result.isSuccess) "\n[√] 完成" else "\n[×] 失败: ${result.code}")
                 consoleScroll.post { consoleScroll.fullScroll(ScrollView.FOCUS_DOWN) }
             }
         }.start()
