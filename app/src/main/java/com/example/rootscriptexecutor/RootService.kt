@@ -3,10 +3,8 @@ package com.example.rootscriptexecutor
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.os.Process
 import android.util.Log
 import com.topjohnwu.superuser.Shell
-import com.topjohnwu.superuser.ipc.RootService
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -80,19 +78,22 @@ class RootService : Service() {
             // Generate random socket name for IPC
             val randomSocketName = "root_service_${UUID.randomUUID().toString().replace("-", "")}"
             
-            // Configure Shell with random socket
-            Shell.Config.setFlags(Shell.FLAG_MOUNT_MASTER)
-            Shell.Config.verboseLogging(false)
+            // FIXED: Use Shell.config (lowercase) instead of Shell.Config
+            Shell.config.setFlags(Shell.FLAG_MOUNT_MASTER)
+            Shell.config.setTimeout(30)
+            Shell.config.verboseLogging = false
             
             // This ensures libsu uses random socket names internally
             Shell.enableVerboseLogging = false
+            
+            // Set default builder with proper configuration
             Shell.setDefaultBuilder(
                 Shell.Builder.create()
                     .setFlags(Shell.FLAG_MOUNT_MASTER)
                     .setTimeout(30)
             )
             
-            Log.d(TAG, "Shell initialized with randomized IPC")
+            Log.d(TAG, "Shell initialized with randomized IPC: $randomSocketName")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize shell", e)
         }
@@ -116,17 +117,18 @@ class RootService : Service() {
             }
             
             // Execute script in isolated mount namespace
+            // FIXED: Use proper shell syntax for PATH variable
             val command = """
                 # Enter isolated mount namespace first
                 nsenter -t 1 -m sh -c "
                     # Change to script directory
-                    cd $SCRIPT_DIR
+                    cd '$SCRIPT_DIR'
                     
-                    # Add current directory to PATH
-                    export PATH=\$PATH:.
+                    # Add current directory to PATH (shell variable, not Kotlin)
+                    PATH="\$PATH:."
                     
                     # Execute script with exec to replace shell process
-                    exec ./$scriptName
+                    exec './$scriptName'
                 "
             """.trimIndent()
             
@@ -149,4 +151,4 @@ class RootService : Service() {
         super.onDestroy()
         Log.d(TAG, "RootService destroyed")
     }
-}
+}</content></tool_result_s0QC>
