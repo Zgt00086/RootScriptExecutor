@@ -25,7 +25,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 初始化所有组件
         consoleOutput = findViewById(R.id.console_output)
         consoleScroll = findViewById(R.id.console_scroll)
         etInput = findViewById(R.id.et_input)
@@ -112,7 +111,10 @@ class MainActivity : AppCompatActivity() {
                 pb.redirectErrorStream(true)
                 val proc = pb.start()
                 scriptWriter = proc.outputStream.bufferedWriter()
-                scriptWriter?.write("sh '$path'\n")
+                
+                // 【核心修复】: 1. 强制赋予执行权限 2. 直接执行文件（不加 sh 前缀）
+                scriptWriter?.write("chmod 777 '$path'\n")
+                scriptWriter?.write("'$path'\n")
                 scriptWriter?.flush()
 
                 val reader = proc.inputStream.bufferedReader()
