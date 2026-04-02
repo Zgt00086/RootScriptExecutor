@@ -1,7 +1,9 @@
 package com.example.rootscriptexecutor
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +22,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var listView: ListView
     private var scriptWriter: BufferedWriter? = null
     private var currentSort = 2
+    
+    // 核心状态：记录脚本是否还在运行
+    private var isProcessAlive = false 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +38,17 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_refresh)?.setOnClickListener { refresh() }
         findViewById<Button>(R.id.btn_sort)?.setOnClickListener { showSort() }
         findViewById<Button>(R.id.btn_send)?.setOnClickListener { send() }
+
+        // 神级交互：监听软键盘的“回车”或“发送”键
+        etInput.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEND ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
+                send()
+                true
+            } else {
+                false
+            }
+        }
 
         listView.setOnItemClickListener { _, _, i, _ -> runScript(scripts[i].name) }
 
@@ -87,38 +103,48 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun send() {
-        val txt = etInput.text.toString()
-        if (txt.isNotEmpty()) {
-            Thread {
-                try {
-                    scriptWriter?.write(txt + "\n")
-                    scriptWriter?.flush()
-                    runOnUiThread { 
-                        consoleOutput.append(">> $txt\n")
-                        etInput.setText("")
-                    }
-                } catch (e: Exception) {}
-            }.start()
+        // 如果脚本已经跑完了，此时点击发送或敲回车，就执行“清屏关闭”操作
+        if (!isProcessAlive) {
+            runOnUiThread {
+                consoleOutput.text = "终端已重置，等待新指令...\n"
+                etInput.setText("")
+            }
+            return
         }
+
+        // 如果脚本还在跑，就正常发送指令
+        val txt = etInput.text.toString()
+        Thread {
+            try {
+                scriptWriter?.write(txt + "\n")
+                scriptWriter?.flush()
+                runOnUiThread { 
+                    if(txt.isNotEmpty()) consoleOutput.append(">> $txt\n")
+                    etInput.setText("")
+                }
+            } catch (e: Exception) {}
+        }.start()
     }
 
     private fun runScript(name: String) {
         val path = "/data/adb/5/$name"
-        consoleOutput.text = ">>> START: $name\n"
+        isProcessAlive = true // 标记进程开始
+        runOnUiThread { 
+            consoleOutput.text = ">>> START: $name\n" 
+            etInput.setText("")
+        }
+
         Thread {
             try {
-                val pb = ProcessBuilder("su")
+                // 使用 su -c 把赋权和执行写在同一行，执行完进程会自动自然死亡
+                val pb = ProcessBuilder("su", "-c", "chmod 777 '$path' && '$path'")
                 pb.redirectErrorStream(true)
                 val proc = pb.start()
                 scriptWriter = proc.outputStream.bufferedWriter()
-                
-                // 【核心修复】: 1. 强制赋予执行权限 2. 直接执行文件（不加 sh 前缀）
-                scriptWriter?.write("chmod 777 '$path'\n")
-                scriptWriter?.write("'$path'\n")
-                scriptWriter?.flush()
 
                 val reader = proc.inputStream.bufferedReader()
                 var line: String?
+                // 实时读取，直到进程结束
                 while (reader.readLine().also { line = it } != null) {
                     val l = line
                     runOnUiThread {
@@ -126,8 +152,19 @@ class MainActivity : AppCompatActivity() {
                         consoleScroll.post { consoleScroll.fullScroll(View.FOCUS_DOWN) }
                     }
                 }
+                
+                proc.waitFor() // 彻底等待底层进程死透
+                isProcessAlive = false // 标记进程结束
+                
+                // 打印 MT 管理器同款提示语
+                runOnUiThread {
+                    consoleOutput.append("\n[进程已结束 - 按回车或发送键关闭]\n")
+                    consoleScroll.post { consoleScroll.fullScroll(View.FOCUS_DOWN) }
+                }
+
             } catch (e: Exception) {
-                runOnUiThread { consoleOutput.append("ERROR: ${e.message}\n") }
+                isProcessAlive = false
+                runOnUiThread { consoleOutput.append("\nERROR: ${e.message}\n[进程异常 - 按回车或发送键关闭]\n") }
             }
         }.start()
     }
